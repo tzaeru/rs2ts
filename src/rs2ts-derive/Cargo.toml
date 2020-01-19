@@ -1,0 +1,10 @@
+[package]
+name = "rs2ts-derive"
+version = "0.1.0"
+
+[lib]
+proc-macro = true
+
+[dependencies.syn]
+version = "1.0.13"
+features = ["extra-traits"]
