@@ -4,7 +4,14 @@ version = "0.1.0"
 authors = ["Jalmari Ikävalko <tzaeru@gmail.com>"]
 edition = "2018"
 
+[lib]
+proc-macro = true
+
+[dependencies.syn]
+version = "1.0.13"
+features = ["extra-traits"]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies.rs2ts-derive]
-path = "src/rs2ts-derive"
+# [dependencies.rs2ts-derive]
+# path = "src/rs2ts-derive"
