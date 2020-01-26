@@ -49,7 +49,6 @@ impl TSInterface {
         format!("{}{}{}", interface_block_open, &fields_def, interface_block_close)
     }
 }
-    
 
 fn rust_type_to_ts_type(ts_type: &str) -> TSType
 {
@@ -61,16 +60,13 @@ fn rust_type_to_ts_type(ts_type: &str) -> TSType
     }
 }
 
-#[proc_macro_derive(ParseToTS, attributes(ts_type))]
-pub fn parse_to_ts(input: TokenStream) -> TokenStream {    
-
-    // Build a syntax tree from the input TokenStream
-    let di: DeriveInput = parse_macro_input!(input);
-    println!("{:?}", di.ident.to_string());
-    match di.data {
+pub fn parse_to_ts(syntax: DeriveInput)
+{
+    //println!("{:?}", syntax.data);
+    match syntax.data {
         // for now, we only handle structs
         Data::Struct(struct_) => {
-            let struct_name = di.ident.to_string();
+            let struct_name = syntax.ident.to_string();
             let mut ts_interface = TSInterface::new(struct_name.clone());
             let mut ts_fields: Vec<TSField> = Vec::new();
             match struct_.fields {
@@ -96,16 +92,15 @@ pub fn parse_to_ts(input: TokenStream) -> TokenStream {
             fs::create_dir_all("target/ts");
 
             let mut file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .open(format!("target/ts/{}.ts", struct_name)).unwrap();
+                .read(true)
+                .write(true)
+                .create(true)
+                .open(format!("target/ts/{}.ts", struct_name)).unwrap();
 
             file.write_all(ts_interface.to_string().as_bytes());
             println!("{}", ts_interface.to_string());
-            "".parse().unwrap()
         }
 
-        _ => panic!("Oly structs are currently supported for deriving ParseToTS"),
+        _ => panic!("Only structs are currently supported for deriving ParseToTS"),
     }
 }
