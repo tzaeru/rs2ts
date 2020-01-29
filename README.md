@@ -13,7 +13,7 @@ PLANNED:
 
 CURRENT STAGE:
 
-See `tests/test.rs`. Can currently e.g. do:
+See `rs2ts-proc/tests/test.rs`. Can currently e.g. do:
 
 ```rust
 #[derive(ParseToTS)]
