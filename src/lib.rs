@@ -7,7 +7,7 @@ use std::io::prelude::*;
 use std::fs::OpenOptions;
 
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, Data, DeriveInput, DataStruct, Fields, Ident, TypePath, Type};
+use syn::{parse_macro_input, Data, DeriveInput, DataStruct, ItemStruct, Fields, Ident, TypePath, Type};
 
 enum TSType {
     String,
@@ -60,7 +60,59 @@ fn rust_type_to_ts_type(ts_type: &str) -> TSType
     }
 }
 
-pub fn parse_to_ts(syntax: DeriveInput)
+fn parse_fields<'a>(fields: &'a Fields) -> Vec<TSField>
+{
+    let mut ts_fields: Vec<TSField> = Vec::new();
+
+    match fields {
+        Fields::Named(ref fields) => {
+            for field in fields.named.iter() {
+                let field_name = field.ident.as_ref().unwrap().to_string();
+                println!("{:?}", field_name);
+                match &field.ty {
+                    Type::Path(type_path) => {
+                        let field_type = type_path.path.segments.first().unwrap().ident.to_string();
+                        println!("{:?}", field_type);
+                        let ts_type = TSField {name: field_name, ts_type: rust_type_to_ts_type(&field_type)};
+                        ts_fields.push(ts_type);
+                    }
+                    _ => {println!("{:?}", &field.ty);}
+                }
+            } 
+        }
+        _ => {}
+    }
+    
+    ts_fields
+}
+
+enum SynStruct {
+    SynItemStruct(ItemStruct),
+    SynDataStruct(DataStruct),
+}
+
+/* Continue here, use SynStruct to match two types of struct to get their names + fields
+fn parse_struct(struct: SynStruct) -> 
+{
+
+}*/
+
+pub fn parse_from_filepath<'a>(path: &'a str)
+{
+    let code = fs::read_to_string(path).unwrap();
+    let syntax = syn::parse_file(&code).unwrap();
+
+    for item in syntax.items.iter() {
+        match item {
+            syn::Item::Struct(ref item) => {
+                println!("{:?}", item);
+            }
+            _ => {}
+        }
+    }
+}
+
+pub fn parse_from_derive_input(syntax: DeriveInput)
 {
     //println!("{:?}", syntax.data);
     match syntax.data {
@@ -68,25 +120,8 @@ pub fn parse_to_ts(syntax: DeriveInput)
         Data::Struct(struct_) => {
             let struct_name = syntax.ident.to_string();
             let mut ts_interface = TSInterface::new(struct_name.clone());
-            let mut ts_fields: Vec<TSField> = Vec::new();
-            match struct_.fields {
-                Fields::Named(ref fields) => {
-                    for field in fields.named.iter() {
-                        let field_name = field.ident.as_ref().unwrap().to_string();
-                        println!("{:?}", field_name);
-                        match &field.ty {
-                            Type::Path(type_path) => {
-                                let field_type = type_path.path.segments.first().unwrap().ident.to_string();
-                                println!("{:?}", field_type);
-                                let ts_type = TSField {name: field_name, ts_type: rust_type_to_ts_type(&field_type)};
-                                ts_fields.push(ts_type);
-                            }
-                            _ => {println!("{:?}", &field.ty);}
-                        }
-                    } 
-                }
-                _ => {}
-            }
+            
+            let ts_fields = parse_fields(&struct_.fields);
             ts_interface.fields = ts_fields;
 
             fs::create_dir_all("target/ts");
